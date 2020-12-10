@@ -1,0 +1,40 @@
+---
+title: The Eyes of Texas
+author: Kamil Riaz
+date: '2020-12-10'
+slug: the-eyes-of-texas
+categories: []
+tags: []
+description: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+#The Eyes of Texas
+![](/img/Texas.jpg)
+Imagine everything that you do on campus is monetized, often without your consent, from social media posts to playing the sport you love. Now imagine walking to Darrell K. Royal Stadium on Saturdays past a fountain named after a man who fought to enslave your people. The same university that profits from you, doesn't even respect you. This is every Black student athlete's experience while walking past Littlefield Fountain, a monument named after a Confederate general who fought to keep slavery in America. How long can you sit back while calling yourself an ally for change without actually fighting for it?
+
+In July of 2020, Student athletes came forward with a list of demands that they needed to be met if they were going to play in the upcoming season. University of Texas student athletes took to social media with a list of changes that they demanded. Athletes such as Jordan Whittington tweeted “Texas football player for a couple years, but Black forever.” University of Texas athletic director, Chris Del Conte, responded that they were working with student athletes to try and meet these demands, before UT published their own list saying that changes would be made to UT Austin. The University of Texas at Austin’s student athletes should continue to protest until their demands for change are truly met where they feel comfortable enough to represent all facets of the school.
+
+Protests allows people to understand that there is still an ongoing issue and allows the administration to realize they will lose revenue if they do not meet the players basic demands. Protesting is a constitutionally protected right that allows like-minded individuals to come together and make their voices heard in a way that they cannot do alone. Its purpose is to bring to light abuses of power. The recent protests led by student athletes at the University of Texas bring attention to the University administration’s lack of effort to eliminate racially insensitive traditions. 
+
+If the University wishes to be truly inclusive and just to its minority student population, the administration should pay greater attention to the voice of its students. In the meantime, the athletes should continue exercising their constitutional rights and protesting the discrimination displayed by the University of Texas.
+
+Following these protests, the administration did cede to some demands, such as changing the names of some campus facilities but failed to address one of the main grievances of the students: changing or eliminating the school fight song, “The Eyes of Texas”. The song has been associated with minstrel shows and derived from a tune that was disparaging to African American laborers. By refusing this demand and making no plans to address it in the future, the University showed a lack of respect for the protesting athletes who are forced to celebrate a song associated with past cruelty.
+
+When student athletes have their ideas and proposals accepted, future student athletes are willing to come to play for a school that is willing to open them propelling the team forward in its future recruiting. UT cares about its recruiting class and the potential revenue a new recruiting class can bring in just as much as any other school. An example of listening to student demands and seeing recruiting rankings significantly go up can be seen with the University of Missouri (Crawford). University of Missouri imploded their football program as their head coach, President, and athletic director all were forced to step down. In 2015, University of Missouri students and student athletes rallied together and came forward with changes they needed to see from the university. After these changes were met the University of Missouri continued to increase their recruiting ranking even hitting as high as 28th nationally for the Class of 2021 (24/7 Sports).
+There is no intent to simply criticize UT and their senior administration team. The administration team has clearly shown they are willing to make some changes to the University of Texas at Austin campus. I want to make sure that all the positive changes made by the University’s administration team are not entirely overshadowed by their inability to change other aspects of UT.
+
+The administration team has clearly shown they are willing to make some changes to the University of Texas at Austin campus. Erecting a statue to honor Julius Whittier and renaming Painter Hall are both welcome but minor concessions (Davis). However, not all the athletes proposed changes were accepted. The Eyes of Texas will still be the fight song of the University of Texas at Austin despite the fact that is was sung in blackface and in minstrel songs in the 1900’s. Student athletes, who were once unified in fighting for change, started dividing as few felt the basic changes made by the University were not enough to fully meet their needs. UT athletics have started collegiate sports this season, but were the changes made by the University of Texas at Austin enough to encourage future recruits to play for the school? 
+
+Athletes at the University of Texas at Austin should not settle for the administrations compromised changes and should continue to protest until real changes are made on the 40 acres.
+
+Crawford, B. (2015, November 08). Here's the list of demands from Mizzou's protesting athletes, students. Retrieved September 26, 2020, from https://www.saturdaydownsouth.com/mizzou-football/heres-list-demands-mizzous-protesting-athletes-students/
+Davis, B. (2020, July 13). UT making sweeping changes in response to athlete requests but keeps 'The Eyes of Texas'. Retrieved September 16, 2020, from https://www.hookem.com/story/20200713/ut-making-sweeping-changes-response-athlete-requests-keeps-eyes-texas/
+24/7 Sports. Missouri 2021 Football Commits. (n.d.). Retrieved September 26, 2020, from https://247sports.com/college/missouri/Season/2021-Football/Commits/
+
+[Link to project 1](/projects/project1.Rmd/)
+
+[Link to google](https://www.google.com)

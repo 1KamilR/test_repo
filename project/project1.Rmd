@@ -1,0 +1,170 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: "SDS348"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document: 
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Syed Kamil Riaz - skr973
+
+### Introduction
+The datatsets that I chose were NBA player tattoos and NBA 'draymond'. The NBA player tattoo dataset describes whether a player in the NBA or who has been in the NBA has tattoos or does not have tattoos. It includes a categorical list of player names and whether they have tattoos or not. The common variable being player names, since most of the players overlap in the dataset is also in the NBA 'draymond' dataset. This dataset consists of numerical variable such as the years these players played and other variables, such as the amount of defensive possesions they had in the various years presented, and a numerical variable called 'draymond' that describes their defensive metrics compared to the average NBA player. NBA players with a higher 'draymond' number are considered better defenders. These datasets were acquired by fivethirtyeight and their extensive statistical research on NBA players and information about them. These datasets intrigue me as I am a big NBA analytics guy, and love the Houston Rockets. In this dataset, I expect to see no correlation between whether players have tattoos and if they are a good defender (higher draymond number). I also expect most players defensive metrics to get better as the years progressed.
+
+### Tidying: Rearranging Wide/Long
+```{R Tidying: Rearranging Wide/Long}
+library(fivethirtyeight)
+data("nba_tattoos")
+tats <- nba_tattoos
+names(tats)[names(tats) == "player_name"] <- "Player Name"
+names(tats)[names(tats) == "tattoos"] <- "Tattoos"
+
+defense <- nba_draymond
+names(defense)[names(defense) == "player"] <- "Player Name"
+names(defense)[names(defense) == "draymond"] <- "Defense"
+names(defense)[names(defense) == "season"] <- "Season"
+names(defense)[names(defense) == "possessions"] <- "Possessions"
+```
+Because both of my datasets are already tidy. I simply ran the datasets for this part of the project and changed the names to be things that would be easier to use and could be used as a combining factor in datasets with Player Names. Other names were changed so capitalization could be consistent throughout the datasets. I will show that I know how to tidy datasets in Dimensionality Reductions. See that section where I show off my tidying skills on summary statistics.
+
+### Joining/Merging:
+```{R Joining/Merging}
+library(tidyr)
+library(tidyverse)
+inner_join(tats, defense, by="Player Name")
+NBAdata <-inner_join(tats, defense, by="Player Name")
+```
+In these two datasets, I went ahead and decided to join them by using 'inner_join'. They were joined by the common variable that is Player Names. As can be seen above there are multiple seasons of numerous amounts of players combined with the fact that they had tattoos as well. It was very important to use a 'inner_join" for this case as it would take  the all of the data from the x and y datasets, that happened to overlap. The cases that were dropped as part of the final NBA dataset was through the use of inner_join as it dropped players that did not have information about both defensive metrics and whether or not they had tattoos.
+
+
+### Wrangling - Six Core dyplr Functions
+```{R Wrangling - Six Core dyplr Functions}
+library(dplyr)
+#six core dplyr functions
+NBAdata %>%filter(Season == "2019")
+RecentNBAdata <- NBAdata %>%filter(Season == "2019")
+NBAdata %>%arrange(Defense)
+NBAdata %>%select(-Possessions, -Season)
+NBAdata %>%summarize(mean(Defense))
+NBAdata %>%group_by(Season) %>% summarize(mean(Possessions))
+RecentNBAdata %>%mutate(Good_Defender =case_when(Defense>5 ~ "elite",
+                                                                     Defense<=5 & 2.5<=Defense ~ "great",
+                                                                     Defense<=2.5 & 0<=Defense ~ "good",
+                                                                     Defense<0 ~ "bad"))
+RecentDefensedata <-RecentNBAdata %>%mutate(Good_Defender =case_when(Defense>5 ~ "elite",
+                                                                     Defense<=5 & 2.5<=Defense ~ "great",
+                                                                     Defense<=2.5 & 0<=Defense ~ "good",
+                                                                     Defense<0 ~ "bad"))
+```
+There were so many wyas to approach this part of looking at recent NBA data. This was by far my favorite part as there were so many of the six core function that I explored, but only my favorite six made the cut, one for each of the main functions. When we 'filter' we took the most recent data from the 2019 season. This was made into its own table as this data would be used later on. The 'arrange' function was then used to find out who the worst defender has been since the data was first collected in 2014 and the answer was Josh McRoberts. If you are an avid you know McRoberts is a horrible defender, but arranging it this way confirms that. Then selecting by dropping the lesser important varibales gave a smaller table that is a little easier to understand. The next function that was performed was the 'summarize' function.The summarize function was used to create a mean to show the average number of possesion an NBA player defended from 2014-2019. The 'group_by' function was then used to confirm a belief in the NBA that the pace of the NBA is increasing and there are more possesions each season, which is true. The 'mutate' function was then used to create a new variable and table to determine whether an individual was an elite, great, good, or bad defender. These statistics can all be useful in free agency when teams are trying to sign better defenders for their respective teams.
+
+### Wrangling - Summary Statistics
+```{R Wrangling - Summary Statistics}
+NBAdata %>% summarize_if(is.numeric, mean, na.rm=T)
+NBAdata %>% summarize_if(is.numeric, sd, na.rm=T)
+RecentDefensedata %>% summarize_if(is.numeric, min, na.rm=T)
+RecentDefensedata %>% summarize_if(is.numeric, max, na.rm=T)
+RecentDefensedata %>% summarize_if(is.numeric, n_distinct, na.rm=T)
+RecentDefensedata %>% summarize_if(is.numeric, IQR, na.rm=T)
+RecentDefensedata %>% group_by(Tattoos) %>% summarize_if(is.numeric, mean)
+NBAdata %>% group_by(Tattoos) %>% summarize_if(is.numeric, mean)
+RecentDefensedata %>% group_by(Good_Defender) %>% summarize_if(is.numeric, mean)
+RecentDefensedata %>% group_by(Good_Defender) %>% summarize_if(is.numeric, max)
+RecentDefensedata %>% group_by(Tattoos, Good_Defender) %>% summarize_if(is.numeric, mean)
+RecentDefensedata %>% group_by(Tattoos, Good_Defender) %>% summarize_if(is.numeric, n_distinct)
+NBAdata %>% select_if(is.numeric) %>% cor(use = "pair")
+CorNBAdata <- NBAdata %>% select_if(is.numeric) %>% cor(use = "pair")
+```
+There were many summary statistics that were created as part of this project. The first few summary statistics were use to simply look at the recent 2019 NBA defensive data and some NBA data from the various seasons studied to learn more information about players from there. Six basic summary statistics were used in orde to analyze the data including mean, standard deviation, minimum, and maximum values, as well as IQR and the number of distinct. These six basic summary statistics methods were looked at and viewed only for the numerical values that were in place as part of this experiment which were the discrete numerical variable such as the season and the continous numerical varibales such as Defense and the number of possesions. After the basic summary statistics were looked at I decided to group NBA tattoos to see if players with tattoos were better defenders or not. When I first saw these datasets, this is what I wanted to see so this is the coolest part in my eyes. If you have tattoos are your defensive numbers higher? The answer is no and its actually the opposite, players without tattoos are usually worse defenders than players who happen to have tattoos. I compared this with NBA data over the last few season to see if this was consistent and it was, players without tattoos are statistically better defender than players with tattoos. The next few statistics grouped by category of how good of a defender they were just to see how the average defender in each category was and what the top defender in each category had in number of possessions defended. These statistics led to the final summary statistics which group by two categorical varibale whether players had tattoos or not, and what category of defender they are. A correlation matrix was then created to see if there was nay correlation between the numeric variables in this dataset, which can be seen in the last table above.
+
+### Visualizations
+```{R Visualizations}
+library(ggplot2)
+#heatmap
+roundedCorNBAdata <- round(cor(CorNBAdata),3)
+library(reshape2)
+meltCorNBAdata <- melt(roundedCorNBAdata)
+lower_tri <- function(roundedCorNBAdata) {
+  roundedCorNBAdata[upper.tri(roundedCorNBAdata)] <- NA
+  return(roundedCorNBAdata)}
+upper_t <- function(roundedCorNBAdata) {
+  roundedCorNBAdata[lower.tri(roundedCorNBAdata)] <- NA
+  return(roundedCorNBAdata)}
+lower_t <- upper_t(roundedCorNBAdata)
+meltCorNBAdata <- melt(lower_t, na.rm = TRUE)
+CorHeatmap<- ggplot(meltCorNBAdata, aes(Var2, Var1, fill = value))+
+ geom_tile(color = "black")+
+ scale_fill_gradient2(low = "red", high = "yellow", mid = "orange",  midpoint = 0, limit = c(-1,1), name="NBA Defense\nCorrelation") +
+  theme_minimal()+ theme(axis.text.x = element_text(angle = 20, vjust = 1,size = 10, hjust = 1))+ coord_fixed()
+CorHeatmap + 
+geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank())
+
+ggplot(NBAdata, aes(x=Season, y=Defense, fill=Tattoos)) + geom_bar(stat="summary", position = "dodge") + ggtitle("NBA Defense by Season with Tattoos")
+
+ggplot(RecentNBAdata, aes(Defense, Possessions, color=Tattoos)) + geom_point() + ggtitle("2019 NBA Possessions and Defense with Tattoos")
+
+```
+The first plot shown is a heatmap of the correlation of the three numeric variables in the combined dataset. There was alot of work done to achieve the correlation statistics and make them look presentable in the plot that is shown. The yellow boxes in this graph can be ignored as the variables are being compared to themselves, so of course they will have a perfect correlation. The other variables shown have no correlation at all which can be seen from the negative numbers on the tiles themselves and by understanding the legend, where the color is much darker when there is no correlation factor in place. This heatmap allows you to see that the numeric varibales Season, Possesions, and Defense have no correlation with one another.
+
+The second plot shown is what the research goal was of this experiment in a simple to understand bargraph. The bargraph places the discrete numeric variable of Season on the x axis and on the y axis the mean defense is shown for players with tattooed players being teal and players without tattoos being red. As  you can see in every year except for 2016, players without tattoos were better defenders on average then players with tattoos. In 2019 this hits its peak as players without tattoos are good defenders and players without tattoos tend to be very poor defenders.
+
+The third plot was created to show three variables and how they related. Defense was placed on the x axis and the y axis was the number of possesions defended. In the case of this dataset if you are a good defender your 'Defense' number is greater than 0 and the better defender you are the higher your number is. If you have a negative number for your "Defense" than you are a bad defender. In this sactterplot, it can be seen that there is no super obvious realtionship between the amount of possesions a player has and if they have better defensive metrics or if they have more possessions there is no correlation whether the NBA player has tattoos or not. There is no obvious relationships or trends that can be seen from this scatterplot.
+
+### Dimensionality Reduction
+```{R Dimensionality Reduction}
+library(tidyverse)
+library(cluster)
+#selected and scaled data
+clust_dat <- NBAdata%>%select(Season, Possessions, Defense, -`Player Name`)
+Sclustdata<- clust_dat %>% scale
+#choosing cluster number - highest silhouette width
+sil_width<-vector()
+for(i in 2:10){
+pam_fit <- pam(Sclustdata, diss = TRUE, k = i)
+sil_width[i] <- pam_fit$silinfo$avg.width
+}
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name="k",breaks=1:10)
+pam1 <- Sclustdata %>% pam(k=3)
+FinalNBAdata <-clust_dat %>% mutate(cluster=as.factor(pam1$clustering))
+#Visualizing
+library(plotly)
+FinalNBAdata %>%plot_ly(x= ~Defense, y = ~Possessions, z = ~Season, color= ~cluster,
+type = "scatter3d", mode = "markers") %>%
+layout(autosize = F, width = 1000, height = 500)
+library(GGally)
+ggpairs(FinalNBAdata, columns=1:4, aes(color=cluster))
+# Goodness of Fit
+plot(pam1, which=2)
+#Summarize Stat and Tidying Data
+FinalNBAdata %>%mutate(cluster=pam1$clustering)%>%group_by(cluster)%>%
+  rename_all(function(x)str_replace(x,"_",""))%>%
+  summarize_if(is.numeric,.funs = list("mean"=mean,"median"=median,"sd"=sd),na.rm=T)%>%
+  pivot_longer(contains("_"))%>%
+  separate(name,sep="_",into=c("variable","stat"))%>%
+  pivot_wider(names_from = "variable",values_from="value")%>%arrange(stat)
+
+
+```
+In the Dimensionality Reduction part of this lab many steps were taken, but the first step that started the process of clustering through PAM was taking the joined dataset, 'NBAdata'and selecting for only the three numeric variables. Since the three numeric variables varied so drastically, they were then scaled to make clustering more simple. IN order to determine how many clusters should be in place, PAM was performed by finding the highst silhouette width. From the first graph, it can be seen that the highest silhouette width was definitely when there is 3 clusters, as that is the peak on the graph. 3 Clusters were then used to calculate and measure the three numeric variables. Euclidian distance was simply used as these were already numeric variables and nothing was needed to be altered. The graphs visualize the clusters at hand for seasons, possesion, defense, and by cluster. The interpretation of the cluster is not really that hard as there were not many trends that can be taken out of this data. One of the main interpretations that can be taken away however is that the main clustering was done based on the amount of possesions defended, where Group 1 had the lowest number of possessions, Group 2 had the most possessions, and group 3 was a wide range of both. Group 2 which had the most possessions defended showed that more possesions generally led to better defense. Another interpretation that can be taken away from this dataset in that cluster 3 had the later seasons and defense has generally got a little worse as possesions increase and in later seasons. One of the final parts that was viewed as part of this part of the project, was looking at the average silhouette width. This was used to determine whether or not the structure was strong. In this case the average silhouette Width of 0.28 indicates that the structure is weak and could be artificial, further proving that there was no real correlations between the numeric variables, Season, Defense, and Number of Possessions.
+
+The final part of this project gave summary statistics on the data that was in play. The summary statics table that was generated was unitdy and was hard to understand so it was hard to find the actual standard deviation, mean and median. To make the interpretation of this data make more sense, the data was tidyed using pivot longer and pivot wider to clean up and tidy the data. The resulting summary statistics data table that is shown illustrates tidy data that tells us a little more information about the cluster to go along with our visualizations. The table backs up the claims made in the previous paragraph that cluster 3 had later seasons and had a little worse defense being played. It also backed up the claim that in cluster 2 there was better defense being played and the NBA players in cluster 2 had more possesions defended. This is usually the case as better defense leads to these NBA players staying on the court longer. Everyone think to make it to the NBA you need to score, but this data shows that to stay on the court once you are in the NBA and play more possessions you better be a good defender. 
+    
+
+
+
+

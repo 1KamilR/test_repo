@@ -1,0 +1,282 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "SDS348"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+library(tidyverse)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+## Project 2
+*Syed Kamil Riaz - skr973*
+
+# Introduction
+```{R Introduction}
+library(fivethirtyeight)
+data("fifa_audience")
+fifa <- fifa_audience
+```
+This dataset was brought to us by fivethirtyeight. In the dataset, the thing that was measured was FIFA audiences. There was 5 variables being show here with the first one being countries. This was followed by the categorical variable of Confederation. The confederation determiens what league you play soccer in and there are 6 possible categories for the confederation variable. The first numeric variable is Population share, which determines the number of people that a country has. The next two variables are also numeric and they are TV audience share and GDP weighted share. The TV audience share shows how many people had a TV in those repsective countries based on their total population. The final numeric variable showed GDP weighted average where the higher the number, the richer the respective country was. In this dataset, there are a total of 191 countries representing the number of observations in place.
+
+# MANOVA assumption
+```{R MANOVA}
+library(rstatix)
+fifa <- manova(cbind(population_share, tv_audience_share, gdp_weighted_share)~confederation, data=fifa_audience)
+summary(fifa)
+
+#univariate ANOVA
+summary.aov(fifa)
+fifa_audience%>%group_by(confederation)%>%summarize(mean(population_share), mean(tv_audience_share), mean(gdp_weighted_share))
+#Post-hoc t tests
+pairwise.t.test(fifa_audience$population_share, fifa_audience$confederation, p.adj="none")
+pairwise.t.test(fifa_audience$tv_audience_share, fifa_audience$confederation, p.adj="none")
+pairwise.t.test(fifa_audience$gdp_weighted_share, fifa_audience$confederation, p.adj="none")
+#Type 1 error chance
+1-0.95^5
+#Bonferroni Correction
+.05/5
+
+#MANOVA assumptions
+fifa1 <- fifa_audience%>%select(confederation, population_share, tv_audience_share, gdp_weighted_share)
+
+ggplot(fifa1, aes(x = population_share, y = tv_audience_share)) +
+ geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~confederation)
+
+covmats<-fifa1%>%group_by(confederation)%>%do(covs=cov(.[2:4]))
+for(i in 1:4){print(covmats$covs[i])}
+
+
+```
+In this part of the Project, MANOVA testing was first performed to show that there was a mean difference across the groups. This can be seen as the table shows that none of the numbers were similar meaning there was a mean difference when comparing the categorical response variable to the three numeric variables that are being tested, population share, tv audience, and GDP. Univariate ANOVAs for the dependent variable was conducted as a follow up test to show there was a mean difference across groups. A post-hoc t test was then performed three times to show that each of the groups did differ. The number of tests performed was 5 (1 MANOVA, 1 ANOVA, and 3 t tests), and was factored in while calculating a type I error wheer the result came out to be 0.2262191. After conducting the Type I error chance, the Bonferroni correction was then calculated to adjust for the chance of a type I error affecting the significant difference. The Bonferroni correction changed the alpha value from .05 to be .01. After calculating for the Bonferroni correction it can be seen that none of the values were significant for the most part.
+The final part here tested whether the MANOVA assumptions were met. The MANOVA assumptions are quite complicated as they require random samples, independent observations for starters which this dataset did meet. Other assumptions however were not able to be met as multivariate normality could not produce a working solution as can be seen in the plot showing that MANOVA assumptions were not met with this dataset. Since there are so many assumptions for MANOVA, and one of the first ones already failed, it is safe to say that MANOVA assumptions were not met for the Fifa Audience dataset.
+
+# Randomization Test
+```{R Randomization Test}
+
+obs_F<-2.287 #this is our observed F-statistic
+Fs<-replicate(5000,{ #do everything in curly braces 5000 times and save the output
+new<-fifa_audience%>%mutate(confederation=sample(confederation)) #randomly permute response variable (confederation)
+#compute the F-statistic by hand
+SSW<- new%>%group_by(confederation)%>%summarize(SSW=sum((population_share-mean(population_share))^2))%>%
+summarize(sum(SSW))%>%pull
+SSB<- new%>%mutate(mean=mean(population_share))%>%group_by(confederation)%>%mutate(groupmean=mean(population_share))%>%
+summarize(SSB=sum((mean-groupmean)^2))%>%summarize(sum(SSB))%>%pull
+(SSB/5)/(SSW/186) #compute F statistic (num df = K-1 = 6-1, denom df = N-K = 191-5)
+})
+{hist(Fs,prob = T); abline(v=obs_F, col="blue", add=T)}
+mean(Fs>obs_F)
+
+```
+Here we calculated an F statistic:
+*Null Hypothesis*:The centroid as well as the dispersion of the groups as defined by the measured space are equivalent for population share, tv audience share, and gdp weighted share.
+*Alternative Hypothesis*: The centroid and/or the spread of the objects is different between the population share, tv audience share, and gdp weighted share.
+*Results*: The p value is .0504 which is slighty greater than the alpha value of .05, which mean we fail to reject the null hypothesis. This means that the values should be equivalent for population share, tv audience share, and gdp weighted share.
+
+# Linear Regression Model
+```{R Linear Regression Model}
+library(tidyverse)
+#Mean centering and dummy coding variables
+fifa1 <- fifa_audience %>%mutate(confed=ifelse(confederation=="AFC",1,0))
+fifa1 <- fifa1%>%mutate(PopShare_c = population_share - mean(population_share, na.rm = T))
+fifa1 <- fifa1%>%mutate(TVAud_c = tv_audience_share - mean(tv_audience_share, na.rm = T))
+fifa1 <- fifa1%>%mutate(GDP_c = gdp_weighted_share - mean(gdp_weighted_share, na.rm = T))
+
+#Linear regression model
+linfit <- lm(GDP_c~TVAud_c*PopShare_c, data = fifa1)
+summary(linfit)
+
+#plot of regression
+ggplot(fifa1, aes(x = GDP_c, y = TVAud_c, group = confederation)) + 
+  geom_point(aes(color=confederation)) +
+  geom_smooth(method="lm", se=F,fullrange=T,aes(color=confederation))+
+theme(legend.position=c(.15,.85), legend.title = element_text(size=10), legend.text = element_text(size=5))
+
+#Checking assumptions
+resid<-linfit$residuals
+fit<-linfit$fitted.values
+ggplot()+geom_point(aes(fit,resid))+geom_hline(yintercept=0, color='green')
+ggplot()+geom_histogram(aes(resid), bins=75)
+ggplot()+geom_qq(aes(sample=resid))+geom_qq_line(aes(sample=resid, color='blue')) + theme(legend.position = "none")
+
+#normal standard error
+library(dplyr)
+library(sandwich)
+library(lmtest)
+library(tidyverse)
+library(plotROC)
+library(pROC)
+coeftest(linfit)
+#robust standard error
+coeftest(linfit, vcov=vcovHC(linfit))
+
+#Regression without interactions and likelihood ratio test
+linfit2 <- lm(GDP_c~TVAud_c+GDP_c, data = fifa1)
+summary(linfit2)
+lrtest(linfit, linfit2)
+```
+The first thing that was done as part of this section was to mean to dummy code for one of the Confederations (AFC) for later study in this section as well as to mean center the three numeric variables. As part of this linear regression model the thing that was decided upon to study was the various confederations against one another. "AFC" represents the confederation of teams in Asia. "UEFA" is European teams. "CONCAF" is North American and LAtin American teams. "CONMEBOL" is South American teams. "OFC" is oceanic nations, and finally "CAF" are African nation. Here their GDP and TV Audience was compared as part of this regression model. One can see from the first plot, that surprisingly African countries which tend to have a higher GDP tend to have a slighty higher audience share as well, with soccer being the least popular in North America.
+By looking at the coefficients and trying to interpret them for the first linear fit line, it can be seen that for nations that Asian countries tend to have a starting GDP factored to be around 0.074 higher when factoring in TV Audience and population share. This simply means that on average Asian countries are richer than other countries that play soccer. Another interpretation that can be taken away from the coefficients is that when controlling for population share, Asian countries tend to have a much higher number of TVs at about 1.177 more for every increase in population share. This means that Asian countries not only lead in the total GDP in the world for soccer playing nations, but they also tend to have the most TVs watching them play as well. However, there is no significant difference between the number of TVs in a country and the population of a country.
+The main significance of the results is approximately the same even after recomputing with the robust SEs. There wasn’t a big difference or change between any of the original SEs and the the robust SEs which makes sense as to why the significance of the results didn’t vary. There were not many changes but there were enoguh to increase teh % variation in the outcome, which can be seen with the variables. When the SEs decreases, t value increases, and p value decreases which the model shows. Also depicted in the model is a 59.2% (using the adjusted R^2 value) of the variation in the outcome.
+
+# Bootstrapped standard errors
+```{R Bootstrapped}
+samp_distn<-replicate(5000, {
+ boot_dat<-boot_dat<-fifa1[sample(nrow(fifa1),replace=TRUE),]
+ bootfit<-lm(GDP_c~TVAud_c*PopShare_c, data = boot_dat)
+ coef(bootfit)
+})
+
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+When SE tends to increase, the t value decreased which causes the p value to increase. By interpreting, one can see that the bootstrapped SE for the intercept is greater than both the original and robust SE values. This in turn means that the t value for it is less and as a result this causes the p value to be larger for the intercept. The bootstrapped SEs for the TVAud_c  are greater than the original, but less than the robust SEs, meaning that when compared to the t and p values of the original SEs, the bootstrapped t values will be less, while the p values will be larger. In comparison with the robust SEs t and p values, the bootstrapped values will be greater and the p values will be lesser. Both the PopShare_c and the PopShare_c:HeartRate_c, values are greater than the original SEs and the Robust, meaning that the t value for it is less and as a result this causes the p value to be larger for these SEs.
+
+# Logistic Regression
+```{R Logistic Regression}
+library(dplyr)
+library(sandwich)
+library(lmtest)
+library(tidyverse)
+#Logistic regression
+logfit<-glm(confed~population_share + tv_audience_share+gdp_weighted_share, data=fifa1, family="binomial")
+coeftest(logfit)
+
+exp(coef(logfit))%>%data.frame()
+#ConfusionMatrix
+prob <- predict(logfit, type="response")
+table(truth=fifa1$confed,predict=as.numeric(prob>.5))%>%addmargins
+
+#Accuracy
+(147+5)/191
+#Sensitivity (TPR)
+5/191
+#Specificity (TNR)
+147/148
+#Recall/Precision (PPV)
+5/6
+
+#Density of log-odds plot
+Logfifa1 <- fifa1
+Logfifa1$logit <- predict(logfit)
+ggplot(Logfifa1, aes(logit, fill=confederation)) + geom_density(alpha=0.3) + geom_vline(xintercept=0, lty=2)
+#ROC curve and AUC
+Rocfifa <- fifa1%>%mutate(probability=predict(logfit, type = "response"), prediction=ifelse(prob>.5,1,0))
+
+classify<-Rocfifa%>%transmute(probability,prediction,truth=confed)
+library(tidyverse)
+library(plotROC)
+library(dbplyr)
+ROCplot<-ggplot(classify)+ geom_roc(aes(d=truth,m=probability), n.cuts=0) + geom_segment(aes(x=0,y=0,xend=1,yend=1),lty=2)
+ROCplot
+calc_auc(ROCplot)
+
+```
+Here the coefficient estimates are first shown. The intercept coeffiecient which means that when there a 0 population share, a 0 TV audience share, and 0 GDP, it shows there is a -1.5 meaning there is no estimate at that place. The most useful data that can be taken from the coefficent estimates are through looking at the population share estimates where if you control for TV audience, and GDP it still shows the average population of the country to be 0.9588. The next step that was done was to run a confusion matrix. The confusion matrix allowed us to better run our statistics and showed that the accuracy was 79.6% while the sensitivity was only 2.6%. The specificity was at 99.3% and the precision is at 83.33%. 
+A ggplot was then calculated in order to show they different colored grouping of the different confederations, before a ROC curve was used to further show statistics. The ROC curve pictured above lso was not a straight line indicating that it might be possible to distinguish the positive and negative parts of the graph. The last thing that was conducted here was calculating the AUC through the use of a package. THe AUC here was 0.606 and that shows it is a fair indicator of the new data. 
+
+```{R Lasso Regression}
+
+#10-fold CV
+set.seed(1234)
+k=10
+class_diag<-function(probs,truth){
+  
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  
+  #how to calculate AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+data<-fifa1[sample(nrow(fifa1)),]
+folds<-cut(seq(1:nrow(fifa1)),breaks=k,labels=F)
+
+diags<-NULL
+for(i in 1:k){
+ train<-data[folds!=i,]
+ test<-data[folds==i,]
+ truth<-test$confed
+ train_fit<-glm(confed~ population_share + tv_audience_share + gdp_weighted_share, data=train,family="binomial")
+ probs<-predict(train_fit,newdata = test,type="response")
+ diags<-rbind(diags,class_diag(probs,truth))
+}
+apply(diags, 2, mean, na.rm = TRUE)
+
+#Lasso Regression
+lassofit <- glm(confed ~ -1 + population_share + tv_audience_share + gdp_weighted_share, data = fifa1, family = "binomial")
+library(glmnet)
+library(dplyr)
+library(sandwich)
+library(lmtest)
+library(tidyverse)
+y<-as.matrix(fifa1$confed)
+x<-model.matrix(lassofit)
+x<-scale(x)
+cv<-cv.glmnet(x,y, family='binomial')
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(cv)
+prob1 <- predict(lassofit, type="response")
+
+class_diag(prob1, fifa1$confed)
+
+#10-fold CV again
+set.seed(1234)
+k=10
+
+data2<-fifa1[sample(nrow(fifa1)),]
+folds2<-cut(seq(1:nrow(fifa1)),breaks=k,labels=F)
+
+diags2<-NULL
+for(i in 1:k){
+ train2<-data2[folds!=i,]
+ test2<-data2[folds==i,]
+ truth2<-test2$confed
+ train_fit2<-glm(confed~ population_share, data=train2, family="binomial")
+ probs2<-predict(train_fit2,newdata = test2,type="response")
+ diags2<-rbind(diags2,class_diag(probs2,truth2))
+}
+
+apply(diags2, 2, mean, na.rm = TRUE)
+```
+The first thing that was done here was to look at the the first 10 fold which allowed us to see the first value given accuracy which was 79.08%. This meant that model correctly predicts 79.08% of the outcomes in the total data. The sensitivity tells me that 11.17% out of the total number of cases are positive. In terms of the number of correctly predicted negative cases, 98.89% is that percentage. The PPV number says how many positives are correct  and true positives and here that number is simply 60%. The AUC number here is 0.5789 which is a little lower than the AUC we previously predicted. In comparison with the classification diagnostics in the in-sample metrics the accuracy, senesitivity, and the specificity were also so similar no distinction could even be made, but precision was certainly lwoere her at 60% then it was before at at 83%.
+Next, the lasso regression was performed in order to determine which model had the best accuracy. If the model were correctly and there was an actually accurate or correlated data one or a few of the explanatory variables would have been selected for. However, this was certainly not the case for my janky data. There were no varibales retained, but the data and 10 fold still had to go on. So I decided to pick up the poulation_share and treat it as if the lasso regression selected that example. The 10 fold CV test was performed using the fake selected variable and a model sample of AUC was created which could be compared to my logistic regression AUC. THe values for the lasso regression were 0.78552632 0.05833333 0.99375000 0.66666667 0.63551649 representing accuracy, sensitivity, specificity, precision, and AUC respectively. Compared to the logistic regression above which had values of 0.7907895 0.1116667 0.9878676 0.6000000 0.5789266. The most important values to compare are the accuracy which has slightly increased in the LASSO regression model and the AUC which has actually decreased. If there was actaully a variable picked by lasso and not one done at random, like what was conducted here, the AUC should have gone up with LASSO regression as it shows that using signifcant variables will help improve prediction.
+

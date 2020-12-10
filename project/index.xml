@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on Kamil Riaz</title>
+    <link>/project/</link>
+    <description>Recent content in Projects on Kamil Riaz</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language><atom:link href="/project/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Syed Kamil Riaz - skr973 Introduction The datatsets that I chose were NBA player tattoos and NBA &#39;draymond&#39;. The NBA player tattoo dataset describes whether a player in the NBA or who has been in the NBA has tattoos or does not have tattoos. It includes a categorical list of player names and whether they have tattoos or not. The common variable being player names, since most of the players overlap in the dataset is also in the NBA &#39;draymond&#39; dataset.</description>
+    </item>
+    
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Project 2 Syed Kamil Riaz - skr973
+ Introduction library(fivethirtyeight) data(&amp;quot;fifa_audience&amp;quot;) fifa &amp;lt;- fifa_audience This dataset was brought to us by fivethirtyeight. In the dataset, the thing that was measured was FIFA audiences. There was 5 variables being show here with the first one being countries. This was followed by the categorical variable of Confederation. The confederation determiens what league you play soccer in and there are 6 possible categories for the confederation variable.</description>
+    </item>
+    
+  </channel>
+</rss>
